@@ -279,17 +279,18 @@ to setup-population
   set global-risk 0
 
   if pop-display = "Mexico" ; just Mexico population
+  ;generating agents for each district
       [ask district-labels
-         [set rep-pop-2015 round (pop-2015 / population-scale)
-          hatch-people rep-pop-2015
+         [set rep-pop-2015 round (pop-2015 / population-scale);;; scaled population
+          hatch-people rep-pop-2015 ;;; make "people" agent whose value is rep-pop-2015
           [assign-people-attributes]]
-       ask people ; move to one of random patches in my district
-           [set my-home-district item 0 [district-name-label] of district-labels-here
-             move-to one-of patches with [district-name = [my-home-district] of myself]
+       ask people ;;; move to one of random patches in my district
+           [set my-home-district item 0 [district-name-label] of district-labels-here ;;; assign district for each agent from district ~~
+             move-to one-of patches with [district-name = [my-home-district] of myself];;; move agent by their districts (random location)
             ]
        ]
 
-;; fix code
+;;; fix code
 if pop-display = "Non-Mexico" ; all countries
   [ask country-labels
     [set rep-pop-15 round (pop-15 / population-scale)
@@ -308,11 +309,14 @@ if pop-display = "Non-Mexico" ; all countries
     if my-home-country = "Belize" [ set color violet ]
     if my-home-country = "Honduras" [ set color orange ]
     ;; Add more conditions for other countries as needed
+
+
   ]
 ]
 
 
   ; update people attributes based on their location where they are intialized
+  ;;; also set up the goal-border-crossing so agent move to their goal location
   ask people
     [set my-home-district [district-name] of patch-here
      set my-home-patch patch-here
@@ -466,10 +470,14 @@ end
 
 
 ;; ROUTINE TO UPDATE WILLINGNESS TO MIGRATE
+;;; compare and balance agent's variables with global variables and update agent's variables
 to update-my-migration-variables
   ; update willingness to migrate based on sliders
 
   ;; if the sliders changed then trend towards the middle of the difference
+  ;;; global-willingness is 0 at first step (setup-population)
+  ;;; when gw != awm, calculate midpoint btw agent's willingness and average willingness (defined by user)
+  ;;; this step gradually adjusts agent's willingness little bit to the average
   if global-willingness != avg-willingness-to-migrate
     [set my-willingness-to-migrate  random-normal (round (abs (avg-willingness-to-migrate - my-willingness-to-migrate) / 2) +  my-willingness-to-migrate) 1.5]; 0-100
 
@@ -552,11 +560,16 @@ end
 
 ;; ROUTINE TO START OR STOP MIGRATING
 to check-my-migration-status
-  let migrate False
+  let migrate False ;;; default mind is not to migrate, and then
+  ;;; they will migrate if both conditions are satisfied
+  ;;; 1. willingness to migrate > 50 (seems 50 is defined by the author)
+  ;;; 2. my-risk-aversion-to-migrate < my-migration-means (these my-values are updated from
+  ;;; "to update-my-migration-variables" and they get random values
   ifelse (my-willingness-to-migrate > 50 and (my-risk-aversion-to-migrate < my-migration-means)); +  100 ))
       [set migrate True]
       [set migrate False]
 
+  ;;; adjust migration status and update time
    ifelse migrating? = migrate
     [set migration-status-time migration-status-time + 1 ] ; just add time
     ; change migrating to True or Flase
@@ -785,10 +798,10 @@ Days
 30.0
 
 BUTTON
-56
-30
-182
-63
+4
+10
+130
+43
 1. model-setup
 model-setup
 NIL
@@ -812,10 +825,10 @@ Agent-Based Model of Migration Movement
 1
 
 BUTTON
-38
-116
-193
-149
+4
+99
+159
+132
 2. setup-population
 setup-population
 NIL
@@ -950,10 +963,10 @@ PENS
 "Honduras" 1.0 0 -817084 true "" "ifelse num-crossed > 0 [plot count people with [my-home-country = \"Honduras\"] / num-crossed * 100] [plot 0]"
 
 SWITCH
-29
-276
-200
-309
+3
+267
+174
+300
 border_restriction
 border_restriction
 0
@@ -961,20 +974,20 @@ border_restriction
 -1000
 
 CHOOSER
-12
-228
-231
-273
+3
+216
+222
+261
 border-choice
 border-choice
 "border-random" "border-nearest" "border-caravan" "border-network-hometown"
 3
 
 BUTTON
-56
-312
-169
-345
+3
+306
+116
+339
 3. run-model
 run-model
 T
@@ -988,10 +1001,10 @@ NIL
 1
 
 SLIDER
-15
-153
-209
-186
+3
+137
+197
+170
 avg-willingness-to-migrate
 avg-willingness-to-migrate
 0
@@ -1008,7 +1021,7 @@ MONITOR
 927
 414
 population
-count people ;* population-scale
+count people with [my-home-country = \"El Salvador\"];* population-scale
 17
 1
 11
@@ -1036,35 +1049,35 @@ count people with [migration-status = \"migrating\"]
 11
 
 CHOOSER
-104
-66
-211
-111
+99
+48
+206
+93
 population-scale
 population-scale
 50000 100000
-1
+0
 
 CHOOSER
-7
-66
-99
-111
+3
+47
+95
+92
 pop-display
 pop-display
-"Mexico" "Non-Mexico"
+"Mexico" "All"
 1
 
 SLIDER
-1
-190
-137
-223
+2
+175
+138
+208
 avg-risk-aversion
 avg-risk-aversion
 0
 100
-13.0
+45.0
 1
 1
 NIL
@@ -1072,9 +1085,9 @@ HORIZONTAL
 
 SLIDER
 140
-190
+176
 236
-223
+209
 avg-means
 avg-means
 0
@@ -1107,11 +1120,11 @@ change-display
 1
 
 TEXTBOX
-18
-375
-123
-417
-You can change dispaly options while model runs.
+6
+376
+111
+418
+You can change display options while model runs.
 11
 0.0
 1
@@ -1137,9 +1150,9 @@ Guatemala
 1
 
 TEXTBOX
-1002
+999
 194
-1041
+1038
 214
 Belize
 11
@@ -1224,9 +1237,9 @@ count people with [migration-status = \"migrating\" and my-home-country = \"Mexi
 
 TEXTBOX
 1137
-190
+192
 1185
-208
+210
 Mexico
 11
 0.0
