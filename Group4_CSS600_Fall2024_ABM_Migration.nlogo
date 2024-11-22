@@ -62,11 +62,11 @@ to model-setup
   set bbox gis:load-dataset "data/bbox.shp";
   ; Using INFORM Risk Indexhttps://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Risk-Facts-Figures
   set country-risk [
-    ["Mexico" 0.55]
-    ["Guatemala" 0.49]
-    ["El Salvador" 0.42]
-    ["Honduras" 0.56]
-    ["Belize" 0.37]
+    ["Mexico" 0.055]
+    ["Guatemala" 0.049]
+    ["El Salvador" 0.042]
+    ["Honduras" 0.056]
+    ["Belize" 0.037]
     ;; Add more countries and their risk values here
   ]
   ;; Draw the map
@@ -517,7 +517,7 @@ to update-my-migration-variables
   if global-risk != avg-risk-aversion
     [set my-risk-aversion-to-migrate  random-normal (round (abs (avg-risk-aversion - my-risk-aversion-to-migrate) / 2) +  my-risk-aversion-to-migrate) 1.5]; 0-100
   ;; Adjust willingness to migrate based on country-specific risk
-  set my-willingness-to-migrate my-willingness-to-migrate + my-willingness-to-migrate * (1 - my-country-risk)
+  set my-willingness-to-migrate my-willingness-to-migrate + my-willingness-to-migrate * (my-country-risk)
   ;; Bound the willingness to migrate between 1 and 100
   set my-willingness-to-migrate max list 1 (min list 100 my-willingness-to-migrate)
 end
@@ -894,7 +894,7 @@ CHOOSER
 border-choice
 border-choice
 "border-random" "border-nearest" "border-caravan" "border-network-hometown"
-2
+3
 
 BUTTON
 3
@@ -922,7 +922,7 @@ avg-willingness-to-migrate
 avg-willingness-to-migrate
 0
 100
-69.0
+54.0
 1
 1
 NIL
@@ -1446,7 +1446,7 @@ CHOOSER
 population-scale
 population-scale
 50000 100000
-0
+1
 
 MONITOR
 848
