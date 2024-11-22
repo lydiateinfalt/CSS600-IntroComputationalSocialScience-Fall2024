@@ -1,4 +1,6 @@
 ; Amira Al-Khulaidy and Melanie Swartz
+; Sangmin Lee, Lisa Nguyen, Lydia Teinfalt
+; Last updated: 11/21/2024
 ; Model of Movements for Migration
 ; Computational Social Science
 ; George Mason University
@@ -8,7 +10,7 @@
 
 ;; GLOBAL VARIABLES AND AGENT PROPERTIES
 extensions [gis csv]; gis and csv extension for Netlogo
-globals [countries mex_districts border_line border_pts bbox patch-scale scale-bar global-willingness global-means global-risk current-display num-crossed]
+globals [countries mex_districts border_line border_pts bbox patch-scale scale-bar global-willingness global-means global-risk current-display num-crossed country-risk]
 patches-own [water-here land-here border-here country district-name habitable? crossable? pop-count migrant-count
   border-sector-name border-wall-here border-crossing-point-here border-crossing-point-name border-crossing-point-name-abbr
   border-wall-here-status border-crossing-point-here-status
@@ -42,6 +44,7 @@ people-own [my-willingness-to-migrate my-migration-means my-risk-aversion-to-mig
   my-current-border-goal my-current-border-goal-source my-current-border-goal-abbr
   failed?
   time-to-leave
+  my-country-risk
   ]
 
 
@@ -57,6 +60,15 @@ to model-setup
   set patch-scale gis:load-dataset "data/25sqkm_box.shp"; includes a 25sq km square and a 50km square for determinging patch size
   set scale-bar gis:load-dataset "data/scale_200km.shp"; scale bar with 0, 100, 200km labels, and 2 boxes of 50km, and 2 of 100km use 50km for black, 100 for white
   set bbox gis:load-dataset "data/bbox.shp";
+  ; Using INFORM Risk Indexhttps://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Risk-Facts-Figures
+  set country-risk [
+    ["Mexico" 0.55]
+    ["Guatemala" 0.49]
+    ["El Salvador" 0.42]
+    ["Honduras" 0.56]
+    ["Belize" 0.37]
+    ;; Add more countries and their risk values here
+  ]
   ;; Draw the map
   draw
   reset-ticks
@@ -291,7 +303,7 @@ to setup-population
        ]
 
 ;;; fix code
-if pop-display = "Non-Mexico" ; all countries
+if pop-display = "All" ; all countries
   [ask country-labels
     [set rep-pop-15 round (pop-15 / population-scale)
      hatch-people rep-pop-15
@@ -303,14 +315,12 @@ if pop-display = "Non-Mexico" ; all countries
   ;; Set colors based on nationality
   ask people
   [
-    if my-home-country = "El Salvador" [ set color brown ]
-    if my-home-country = "Guatemala" [ set color red ]
+    if my-home-country = "El Salvador" [ set color red ]
+    if my-home-country = "Guatemala" [ set color green ]
     if my-home-country = "Mexico" [ set color blue ]
-    if my-home-country = "Belize" [ set color violet ]
-    if my-home-country = "Honduras" [ set color orange ]
+    if my-home-country = "Honduras" [ set color orange]
+    if my-home-country = "Belize" [ set color white]
     ;; Add more conditions for other countries as needed
-
-
   ]
 ]
 
@@ -386,7 +396,26 @@ to-report name-of-nearest-border-crossing
 
 
 end
+;; HELPER FUNCTION READS UNIQUE COUNTRY RISK LEVEL AND ASSIGN IT
+to-report get-country-risk [my-country-name]
+  let risk 0
+  foreach country-risk [
+    [country-risk-pair] ->
+    if item 0 country-risk-pair = my-country-name [
+      set risk item 1 country-risk-pair
+    ]
+  ]
+  report risk
+end
 
+to-report all-country-risks
+  let result ""
+  foreach country-risk [
+    [country-risk-pair] ->
+    set result (word result item 0 country-risk-pair ": " item 1 country-risk-pair " \n")
+  ]
+  report result
+end
 
 ;; PEOPLE ATTRIBUTES INITIALIZATION
 to assign-people-attributes
@@ -395,6 +424,7 @@ to assign-people-attributes
    set my-willingness-to-migrate random-normal avg-willingness-to-migrate 3; 0-100
    set my-migration-means  random-normal avg-means 3 ; 0-100
    set my-risk-aversion-to-migrate random-normal avg-risk-aversion 3; 0-100
+   set my-country-risk get-country-risk my-home-country
    set migrating? False
    set migrating-time 0
    set migration-status "not" ; not, stay, migrating, at_border, processing, apprehended, crossed, returning
@@ -486,6 +516,8 @@ to update-my-migration-variables
 
   if global-risk != avg-risk-aversion
     [set my-risk-aversion-to-migrate  random-normal (round (abs (avg-risk-aversion - my-risk-aversion-to-migrate) / 2) +  my-risk-aversion-to-migrate) 1.5]; 0-100
+  ;; Adjust willingness to migrate based on country-level risk
+  set my-willingness-to-migrate my-willingness-to-migrate * (1 - my-country-risk)
 end
 
 
@@ -798,10 +830,10 @@ Days
 30.0
 
 BUTTON
-4
-10
-130
-43
+6
+26
+132
+59
 1. model-setup
 model-setup
 NIL
@@ -825,10 +857,10 @@ Agent-Based Model of Migration Movement
 1
 
 BUTTON
-4
-99
-159
-132
+6
+115
+122
+148
 2. setup-population
 setup-population
 NIL
@@ -841,153 +873,32 @@ NIL
 NIL
 1
 
-MONITOR
-917
-310
-976
-355
-crossed
-count people with [migration-status = \"crossed\" and my-home-country = \"Guatemala\"]
-17
-1
-11
-
-MONITOR
-845
-308
-907
-353
-crossed
-count people with [migration-status = \"crossed\" and my-home-country = \"El Salvador\"]
-17
-1
-11
-
-MONITOR
-916
-211
-974
-256
-migrating
-count people with [migration-status = \"migrating\" and my-home-country = \"Guatemala\"]
-17
-1
-11
-
-MONITOR
-917
-261
-976
-306
-at_border
-count people with [migration-status = \"at_border\" and my-home-country = \"Guatemala\"]
-17
-1
-11
-
-MONITOR
-847
-259
-907
-304
-at_border
-count people with [migration-status = \"at_border\" and my-home-country = \"El Salvador\"]
-17
-1
-11
-
-MONITOR
-847
-211
-908
-256
-migrating
-count people with [migration-status = \"migrating\" and my-home-country = \"El Salvador\"]
-17
-1
-11
-
-MONITOR
-983
-209
-1047
-254
-migrating
-count people with [migration-status = \"migrating\" and my-home-country = \"Belize\"]
-17
-1
-11
-
-MONITOR
-984
-261
-1047
-306
-at_border
-count people with [migration-status = \"at_border\" and my-home-country = \"Belize\"]
-17
-1
-11
-
-MONITOR
-984
-308
-1045
-353
-crossed
-count people with [migration-status = \"crossed\" and my-home-country = \"Belize\"]
-17
-1
-11
-
-PLOT
-842
-10
-1190
-194
-Migrants crossed at port of entry
-Days
-% of all Migrants
-0.0
-10.0
-0.0
-100.0
-true
-true
-"" ""
-PENS
-"El Salvador" 1.0 0 -8431303 true "" "ifelse num-crossed > 0 [plot count people with [my-home-country = \"El Salvador\"] / num-crossed * 100] [plot 0]"
-"Guatemala" 1.0 0 -5298144 true "" "ifelse num-crossed > 0 [plot count people with [my-home-country = \"Guatemala\"] / num-crossed * 100] [plot 0]"
-"Mexico" 1.0 0 -10649926 true "" "ifelse num-crossed > 0 [plot count people with [my-home-country = \"Mexico\"] / num-crossed * 100] [plot 0]"
-"Belize" 1.0 0 -8630108 true "" "ifelse num-crossed > 0 [plot count people with [my-home-country = \"Belize\"] / num-crossed * 100] [plot 0]"
-"Honduras" 1.0 0 -817084 true "" "ifelse num-crossed > 0 [plot count people with [my-home-country = \"Honduras\"] / num-crossed * 100] [plot 0]"
-
 SWITCH
-3
-267
-174
-300
-border_restriction
-border_restriction
 0
+276
+171
+309
+border_restriction
+border_restriction
+1
 1
 -1000
 
 CHOOSER
-3
-216
-222
-261
+2
+228
+221
+273
 border-choice
 border-choice
 "border-random" "border-nearest" "border-caravan" "border-network-hometown"
-3
+2
 
 BUTTON
 3
-306
+312
 116
-339
+345
 3. run-model
 run-model
 T
@@ -1001,36 +912,36 @@ NIL
 1
 
 SLIDER
-3
-137
-197
-170
+5
+152
+199
+185
 avg-willingness-to-migrate
 avg-willingness-to-migrate
 0
 100
-71.0
+69.0
 1
 1
 NIL
 HORIZONTAL
 
 MONITOR
-846
-369
-927
-414
+1092
+27
+1173
+72
 population
-count people with [my-home-country = \"El Salvador\"];* population-scale
+count people ;* population-scale
 17
 1
 11
 
 MONITOR
-1105
-370
-1189
-415
+1178
+74
+1262
+119
 num crossed
 count people with [migration-status = \"crossed\"]
 17
@@ -1038,10 +949,10 @@ count people with [migration-status = \"crossed\"]
 11
 
 MONITOR
-934
-370
-1015
-415
+1093
+73
+1174
+118
 migrating
 count people with [migration-status = \"migrating\"]
 17
@@ -1049,35 +960,25 @@ count people with [migration-status = \"migrating\"]
 11
 
 CHOOSER
-99
-48
-206
-93
-population-scale
-population-scale
-50000 100000
-0
-
-CHOOSER
-3
-47
-95
-92
+6
+63
+98
+108
 pop-display
 pop-display
 "Mexico" "All"
 1
 
 SLIDER
-2
-175
-138
-208
+3
+190
+139
+223
 avg-risk-aversion
 avg-risk-aversion
 0
 100
-45.0
+48.0
 1
 1
 NIL
@@ -1085,9 +986,9 @@ HORIZONTAL
 
 SLIDER
 140
-176
+190
 236
-209
+223
 avg-means
 avg-means
 0
@@ -1099,125 +1000,156 @@ NIL
 HORIZONTAL
 
 MONITOR
-1019
-371
-1100
-416
+1179
+27
+1260
+72
 at_border
 count people with [migration-status = \"at_border\"]
 17
 1
 11
 
+PLOT
+847
+27
+1086
+147
+Migration status
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"migrating" 1.0 0 -7500403 true "" "plot count people with [migration-status = \"migrating\"]"
+"at_border" 1.0 0 -2674135 true "" "plot count people with [migration-status = \"at_border\"]"
+"crossed" 1.0 0 -10899396 true "" "plot count people with [migration-status = \"crossed\"]"
+
 CHOOSER
-119
-373
-232
-418
+112
+374
+225
+419
 change-display
 change-display
 "pop" "migrants only" "pop-dens" "migrant-dens" "pop-dens and migrants" "pop-dens and migrant-dens"
-1
+0
 
 TEXTBOX
-6
-376
+27
+375
 111
-418
+417
 You can change display options while model runs.
 11
 0.0
 1
 
-TEXTBOX
-848
-195
-926
-214
-El Salvador
-11
+PLOT
+847
+281
+1087
+401
+Honduras Migration status
+NIL
+NIL
 0.0
-1
-
-TEXTBOX
-921
-195
-977
-223
-Guatemala
-11
+10.0
 0.0
-1
-
-TEXTBOX
-999
-194
-1038
-214
-Belize
-11
-0.0
-1
+10.0
+true
+true
+"" ""
+PENS
+"migrating" 1.0 0 -5987164 true "" "plot count people with [migration-status = \"migrating\" and my-home-country = \"Honduras\"]"
+"at_border" 1.0 0 -2674135 true "" "plot count people with [migration-status = \"at_border\" and my-home-country = \"Honduras\"]"
+"crossed" 1.0 0 -10899396 true "" "plot count people with [migration-status = \"crossed\" and my-home-country = \"Honduras\"]"
 
 MONITOR
-1056
-307
-1117
-352
-crossed
-count people with [migration-status = \"crossed\" and my-home-country = \"Honduras\"]
+1091
+282
+1166
+327
+population
+(count people with [my-home-country = \"Honduras\"]) ;* population-scale
 17
 1
 11
 
 MONITOR
-1056
-256
-1119
-301
+1170
+282
+1237
+327
 at_border
-count people with [migration-status = \"at_border\" and my-home-country = \"Honruas\"]
+count people with [migration-status = \"at_border\" and my-home-country = \"Honduras\"]
 17
 1
 11
 
 MONITOR
-1054
-206
-1118
-251
+1091
+331
+1154
+376
 migrating
 count people with [migration-status = \"migrating\" and my-home-country = \"Honduras\"]
 17
 1
 11
 
-TEXTBOX
-1060
-193
-1132
-211
-Honduras
-11
-0.0
+MONITOR
+1158
+331
+1245
+376
+num crossed
+count people with [migration-status = \"crossed\" and my-home-country = \"Honduras\"]
+17
 1
+11
+
+PLOT
+846
+154
+1085
+275
+Mexico Migration status
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"migrating" 1.0 0 -4539718 true "" "plot count people with [migration-status = \"migrating\" and my-home-country = \"Mexico\"]"
+"at_border" 1.0 0 -2674135 true "" "plot count people with [migration-status = \"at_border\" and my-home-country = \"Mexico\"]"
+"crossed" 1.0 0 -10899396 true "" "plot count people with [migration-status = \"crossed\" and my-home-country = \"Mexico\"]"
 
 MONITOR
-1126
-307
-1183
-352
-crossed
-count people with [migration-status = \"crossed\" and my-home-country = \"Mexico\"]
+1090
+154
+1162
+199
+population
+(count people with [my-home-country = \"Mexico\"]) ;* population-scale
 17
 1
 11
 
 MONITOR
-1126
-253
-1185
-298
+1166
+154
+1233
+199
 at_border
 count people with [migration-status = \"at_border\" and my-home-country = \"Mexico\"]
 17
@@ -1225,25 +1157,305 @@ count people with [migration-status = \"at_border\" and my-home-country = \"Mexi
 11
 
 MONITOR
-1125
-205
-1189
-250
+1090
+203
+1153
+248
 migrating
 count people with [migration-status = \"migrating\" and my-home-country = \"Mexico\"]
 17
 1
 11
 
-TEXTBOX
-1137
-192
-1185
-210
-Mexico
-11
-0.0
+MONITOR
+1156
+203
+1243
+248
+num crossed
+count people with [migration-status = \"crossed\" and my-home-country = \"Mexico\"]
+17
 1
+11
+
+PLOT
+848
+405
+1087
+529
+Guatemala Migration Status
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"migrating" 1.0 0 -5987164 true "" "plot count people with [migration-status = \"migrating\" and my-home-country = \"Guatemala\"]"
+"at_border" 1.0 0 -2674135 true "" "plot count people with [migration-status = \"at_border\" and my-home-country = \"Guatemala\"]"
+"crossed" 1.0 0 -10899396 true "" "plot count people with [migration-status = \"crossed\" and my-home-country = \"Guatemala\"]"
+
+MONITOR
+1091
+406
+1163
+451
+population
+(count people with [my-home-country = \"Guatemala\"]) ;* population-scale
+17
+1
+11
+
+MONITOR
+1168
+406
+1235
+451
+at_border
+count people with [migration-status = \"at_border\" and my-home-country = \"Guatemala\"]
+17
+1
+11
+
+MONITOR
+1091
+455
+1154
+500
+migrating
+count people with [migration-status = \"migrating\" and my-home-country = \"Guatemala\"]
+17
+1
+11
+
+MONITOR
+1159
+455
+1246
+500
+num crossed
+count people with [migration-status = \"crossed\" and my-home-country = \"Guatemala\"]
+17
+1
+11
+
+PLOT
+21
+439
+266
+566
+El Salvador Migration status
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"migrating" 1.0 0 -7500403 true "" "plot count people with [migration-status = \"migrating\" and my-home-country = \"El Salvador\"]"
+"at_border" 1.0 0 -2674135 true "" "plot count people with [migration-status = \"at_border\" and my-home-country = \"El Salvador\"]"
+"crossed" 1.0 0 -10899396 true "" "plot count people with [migration-status = \"crossed\" and my-home-country = \"El Salvador\"]"
+
+MONITOR
+273
+439
+345
+484
+population
+(count people with [my-home-country = \"El Salvador\"]) ;* population-scale
+17
+1
+11
+
+MONITOR
+351
+439
+418
+484
+at_border
+count people with [migration-status = \"at_border\" and my-home-country = \"El Salvador\"]
+17
+1
+11
+
+MONITOR
+273
+488
+336
+533
+migrating
+count people with [migration-status = \"migrating\" and my-home-country = \"El Salvador\"]
+17
+1
+11
+
+MONITOR
+341
+488
+428
+533
+num crossed
+count people with [migration-status = \"crossed\" and my-home-country = \"El Salvador\"]
+17
+1
+11
+
+PLOT
+435
+438
+680
+563
+Belize Migration Status
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"migrating" 1.0 0 -5987164 true "" "plot count people with [migration-status = \"migrating\" and my-home-country = \"Belize\"]"
+"at_border" 1.0 0 -2674135 true "" "plot count people with [migration-status = \"at_border\" and my-home-country = \"Belize\"]"
+"crossed" 1.0 0 -10899396 true "" "plot count people with [migration-status = \"crossed\" and my-home-country = \"Belize\"]"
+
+MONITOR
+685
+438
+757
+483
+population
+(count people with [my-home-country = \"Belize\"]) ;* population-scale
+17
+1
+11
+
+MONITOR
+761
+438
+828
+483
+at_border
+count people with [migration-status = \"at_border\" and my-home-country = \"Belize\"]
+17
+1
+11
+
+MONITOR
+751
+486
+838
+531
+num crossed
+count people with [migration-status = \"crossed\" and my-home-country = \"Belize\"]
+17
+1
+11
+
+MONITOR
+1236
+154
+1293
+199
+Ratio
+count people with [migration-status = \"crossed\" and my-home-country = \"Mexico\"]/(count people with [my-home-country = \"Mexico\"])
+4
+1
+11
+
+MONITOR
+1263
+27
+1320
+72
+ratio
+count people with [migration-status = \"crossed\"]/(count people)
+4
+1
+11
+
+MONITOR
+1242
+282
+1299
+327
+ratio
+count people with [migration-status = \"crossed\" and my-home-country = \"Honduras\"]/(count people with [my-home-country = \"Honduras\"])
+4
+1
+11
+
+MONITOR
+1239
+406
+1296
+451
+ratio
+count people with [migration-status = \"crossed\" and my-home-country = \"Guatemala\"]/(count people with [my-home-country = \"Guatemala\"])
+4
+1
+11
+
+MONITOR
+273
+537
+330
+582
+ratio
+count people with [migration-status = \"crossed\" and my-home-country = \"El Salvador\"]/(count people with [my-home-country = \"El Salvador\"])
+4
+1
+11
+
+MONITOR
+685
+534
+742
+579
+ratio
+count people with [migration-status = \"crossed\" and my-home-country = \"Belize\"]/(count people with [my-home-country = \"Belize\"])
+4
+1
+11
+
+MONITOR
+685
+486
+747
+531
+migrating
+count people with [migration-status = \"migrating\" and my-home-country = \"Belize\"]
+17
+1
+11
+
+CHOOSER
+101
+64
+208
+109
+population-scale
+population-scale
+50000 100000
+0
+
+MONITOR
+848
+534
+1242
+579
+NIL
+all-country-risks
+17
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
