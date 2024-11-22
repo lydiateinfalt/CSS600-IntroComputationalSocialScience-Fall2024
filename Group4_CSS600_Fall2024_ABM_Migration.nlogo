@@ -516,8 +516,10 @@ to update-my-migration-variables
 
   if global-risk != avg-risk-aversion
     [set my-risk-aversion-to-migrate  random-normal (round (abs (avg-risk-aversion - my-risk-aversion-to-migrate) / 2) +  my-risk-aversion-to-migrate) 1.5]; 0-100
-  ;; Adjust willingness to migrate based on country-level risk
-  set my-willingness-to-migrate my-willingness-to-migrate * (1 - my-country-risk)
+  ;; Adjust willingness to migrate based on country-specific risk
+  set my-willingness-to-migrate my-willingness-to-migrate + my-willingness-to-migrate * (1 - my-country-risk)
+  ;; Bound the willingness to migrate between 1 and 100
+  set my-willingness-to-migrate max list 1 (min list 100 my-willingness-to-migrate)
 end
 
 
