@@ -574,8 +574,8 @@ to run-model
   ; Stop the model when no more people migrating
   if not any? people with [migration-status = "migrating"]
       [stop]
-  ;; Update counters before agents move
-  ;update-counters
+  ;; Reset counters
+  set total-migration-counts 0
 
   ; have agents get info from other agents that are close by or those from their hometown that already crossed
    ask people with [migration-status = "migrating" ]
@@ -612,7 +612,7 @@ to run-model
   set num-at-border count people with [migration-status = "at_border"]
   ;; Calculate totals
 
-  set total-migration-counts total-migration-counts + num-crossed + num-migrating + num-at-border
+  set total-migration-counts num-crossed + num-migrating + num-at-border
 
   update-globals
   update-display
@@ -2142,6 +2142,7 @@ setup-population</setup>
     <setup>model-setup
 setup-population</setup>
     <go>run-model</go>
+    <exitCondition>ticks &gt;= 465</exitCondition>
     <metric>num-crossed</metric>
     <metric>num-migrating</metric>
     <metric>num-at-border</metric>
