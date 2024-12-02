@@ -1358,7 +1358,7 @@ count people with [migration-status = \"migrating\" and my-home-country = \"Guat
 MONITOR
 1159
 455
-1218
+1232
 500
 num crossed
 count people with [migration-status = \"crossed\" and my-home-country = \"Guatemala\"]
@@ -1578,116 +1578,6 @@ MONITOR
 NIL
 all-country-risks
 17
-1
-11
-
-MONITOR
-1222
-204
-1285
-249
-total migrant
-item 0 total-migration-counts
-17
-1
-11
-
-MONITOR
-1241
-329
-1302
-374
-total migrants
-item 3 total-migration-counts
-17
-1
-11
-
-MONITOR
-1224
-455
-1287
-500
-total migrants
-item 1 total-migration-counts
-17
-1
-11
-
-MONITOR
-333
-538
-387
-583
-total migrants
-item 2 total-migration-counts
-17
-1
-11
-
-MONITOR
-741
-533
-798
-578
-total migrants
-item 4 total-migration-counts
-17
-1
-11
-
-MONITOR
-1309
-328
-1376
-373
-new ratio
-(item 3 total-migration-counts)/(count people with [my-home-country = \"Honduras\"])
-4
-1
-11
-
-MONITOR
-1292
-454
-1361
-499
-new ratio
-(item 1 total-migration-counts)/(count people with [my-home-country = \"Guatemala\"])
-4
-1
-11
-
-MONITOR
-797
-533
-864
-578
-new ratio
-(item 4 total-migration-counts)/(count people with [my-home-country = \"Belize\"])
-4
-1
-11
-
-MONITOR
-386
-538
-436
-583
-new ratio
-(item 2 total-migration-counts)/(count people with [my-home-country = \"El Salvador\"])
-4
-1
-11
-
-MONITOR
-1292
-202
-1356
-247
-new ratio
-(item 0 total-migration-counts)/(count people with [my-home-country = \"Mexico\"])
-4
 1
 11
 
@@ -2142,7 +2032,7 @@ setup-population</setup>
     <setup>model-setup
 setup-population</setup>
     <go>run-model</go>
-    <exitCondition>ticks &gt;= 465</exitCondition>
+    <timeLimit steps="365"/>
     <metric>num-crossed</metric>
     <metric>num-migrating</metric>
     <metric>num-at-border</metric>
