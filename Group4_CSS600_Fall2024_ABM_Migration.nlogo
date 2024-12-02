@@ -1,6 +1,6 @@
 ; Amira Al-Khulaidy and Melanie Swartz
 ; Sangmin Lee, Lisa Nguyen, Lydia Teinfalt
-; Last updated: 11/21/2024
+; Last updated: 12/01/2024
 ; Model of Movements for Migration
 ; Computational Social Science
 ; George Mason University
@@ -10,7 +10,8 @@
 
 ;; GLOBAL VARIABLES AND AGENT PROPERTIES
 extensions [gis csv]; gis and csv extension for Netlogo
-globals [countries mex_districts border_line border_pts bbox patch-scale scale-bar global-willingness global-means global-risk current-display num-crossed country-risk]
+globals [countries mex_districts border_line border_pts bbox patch-scale scale-bar global-willingness global-means global-risk current-display num-crossed country-risk num-migrating num-at-border total-migration-counts
+  country-names]
 patches-own [water-here land-here border-here country district-name habitable? crossable? pop-count migrant-count
   border-sector-name border-wall-here border-crossing-point-here border-crossing-point-name border-crossing-point-name-abbr
   border-wall-here-status border-crossing-point-here-status
@@ -60,6 +61,7 @@ to model-setup
   set patch-scale gis:load-dataset "data/25sqkm_box.shp"; includes a 25sq km square and a 50km square for determinging patch size
   set scale-bar gis:load-dataset "data/scale_200km.shp"; scale bar with 0, 100, 200km labels, and 2 boxes of 50km, and 2 of 100km use 50km for black, 100 for white
   set bbox gis:load-dataset "data/bbox.shp";
+  set country-names ["Mexico" "Guatemala" "El Salvador" "Honduras" "Belize"]
   ; Using INFORM Risk Indexhttps://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Risk-Facts-Figures
   set country-risk [
     ["Mexico" 0.055]
@@ -69,10 +71,14 @@ to model-setup
     ["Belize" 0.037]
     ;; Add more countries and their risk values here
   ]
+  set num-migrating n-values length country-names [0]
+  set num-at-border n-values length country-names [0]
+  set num-crossed n-values length country-names [0]
+  set total-migration-counts n-values length country-names [0]
   ;; Draw the map
   draw
   reset-ticks
-  set num-crossed 0
+  ;set num-crossed 0
 end
 
 ;; UPDATE THE MAP DISPLAY WITH COUNTRIES, WATER, AND BORDER CROSSINGS
@@ -324,6 +330,80 @@ if pop-display = "All" ; all countries
   ]
 ]
 
+ if pop-display = "Non-Mexico" [
+    ;; All countries except Mexico
+    ask country-labels with [country-name-label != "Mexico"] [
+      set rep-pop-15 round (pop-15 / population-scale)
+      hatch-people rep-pop-15 [
+        assign-people-attributes
+      ]
+    ]
+    ask people [
+      move-to one-of patches with [country = [my-home-country] of myself]
+      set my-home-district ""
+    ]
+    ;; Set colors based on nationality
+    ask people [
+      if my-home-country = "El Salvador" [set color red]
+      if my-home-country = "Guatemala" [set color green]
+      if my-home-country = "Honduras" [set color orange]
+      if my-home-country = "Belize" [set color white]
+    ]
+  ]
+
+;;; Individual Country
+if pop-display = "Belize" [
+    ask country-labels with [country-name-label = "Belize"]
+  [set rep-pop-15 round (pop-15 / population-scale)
+    hatch-people rep-pop-15
+      [assign-people-attributes
+    set color white]]
+  ask people
+    [move-to one-of patches with [country = "Belize"]
+      set my-home-country "Belize"
+    ]
+  ]
+
+
+
+if pop-display = "Honduras" [
+    ask country-labels with [country-name-label = "Honduras"]
+  [set rep-pop-15 round (pop-15 / population-scale)
+    hatch-people rep-pop-15
+      [assign-people-attributes
+    set color orange]]
+  ask people
+    [move-to one-of patches with [country = "Honduras"]
+    set my-home-country "Honduras"
+    ]
+  ]
+
+if pop-display = "Guatemala" [
+    ask country-labels with [country-name-label = "Guatemala"]
+  [set rep-pop-15 round (pop-15 / population-scale)
+    hatch-people rep-pop-15
+      [assign-people-attributes
+    set color green]]
+  ask people
+    [move-to one-of patches with [country = "Guatemala"]
+    set my-home-country "Guatemala"
+    ]
+  ]
+
+if pop-display = "El Salvador" [
+    ask country-labels with [country-name-label = "El Salvador"]
+  [set rep-pop-15 round (pop-15 / population-scale)
+    hatch-people rep-pop-15
+      [assign-people-attributes
+    set color red]]
+  ask people
+    [move-to one-of patches with [country = "El Salvador"]
+    set my-home-country "El Salvador"
+    ]
+  ]
+
+
+
 
   ; update people attributes based on their location where they are intialized
   ;;; also set up the goal-border-crossing so agent move to their goal location
@@ -454,12 +534,52 @@ to assign-people-attributes
   check-my-migration-status
 end
 
+;; HELPER FUNCTION
+to update-counters
+  ;; Reset lists
+  set num-migrating n-values length country-names [0]
+  set num-at-border n-values length country-names [0]
+
+  ;; Update migrating counters
+  ask people with [migration-status = "migrating"] [
+    let country-index position my-home-country country-names
+    if country-index != false [
+      set num-migrating replace-item country-index num-migrating (item country-index num-migrating + 1)
+    ]
+  ]
+
+  ;; Update at border counters
+  ask people with [migration-status = "at_border"] [
+    let country-index position my-home-country country-names
+    if country-index != false [
+      set num-at-border replace-item country-index num-at-border (item country-index num-at-border + 1)
+    ]
+  ]
+
+  ;; Update at border counters
+  ask people with [migration-status = "crossed"] [
+    let country-index position my-home-country country-names
+    if country-index != false [
+      set num-crossed replace-item country-index num-crossed (item country-index num-crossed + 1)
+    ]
+  ]
+
+  ;; Calculate totals
+  (foreach num-migrating num-at-border num-crossed [
+    [migrating at-border] ->
+    let index position migrating num-migrating
+    set total-migration-counts replace-item index total-migration-counts (migrating + at-border)
+  ])
+end
+
 
 ;; BUTTON PROCEDURE TO RUN THE MODEL
 to run-model
   ; Stop the model when no more people migrating
   if not any? people with [migration-status = "migrating"]
       [stop]
+  ;; Update counters before agents move
+  update-counters
 
   ; have agents get info from other agents that are close by or those from their hometown that already crossed
    ask people with [migration-status = "migrating" ]
@@ -491,7 +611,7 @@ to run-model
   ; enable border crossings and apprehensions etc
   handle-people-at-border
 
-  set num-crossed count people with [migration-status = "crossed"]
+  ; set num-crossed count people with [migration-status = "crossed"]
   update-globals
   update-display
 
@@ -922,7 +1042,7 @@ avg-willingness-to-migrate
 avg-willingness-to-migrate
 0
 100
-54.0
+66.0
 1
 1
 NIL
@@ -968,8 +1088,8 @@ CHOOSER
 108
 pop-display
 pop-display
-"Mexico" "All"
-1
+"Mexico" "All" "Belize" "Honduras" "Guatemala" "El Salvador" "Non-Mexico"
+6
 
 SLIDER
 3
@@ -980,7 +1100,7 @@ avg-risk-aversion
 avg-risk-aversion
 0
 100
-48.0
+24.0
 1
 1
 NIL
@@ -995,7 +1115,7 @@ avg-means
 avg-means
 0
 100
-42.0
+46.0
 1
 1
 NIL
@@ -1108,7 +1228,7 @@ count people with [migration-status = \"migrating\" and my-home-country = \"Hond
 MONITOR
 1158
 331
-1245
+1234
 376
 num crossed
 count people with [migration-status = \"crossed\" and my-home-country = \"Honduras\"]
@@ -1172,7 +1292,7 @@ count people with [migration-status = \"migrating\" and my-home-country = \"Mexi
 MONITOR
 1156
 203
-1243
+1219
 248
 num crossed
 count people with [migration-status = \"crossed\" and my-home-country = \"Mexico\"]
@@ -1236,7 +1356,7 @@ count people with [migration-status = \"migrating\" and my-home-country = \"Guat
 MONITOR
 1159
 455
-1246
+1218
 500
 num crossed
 count people with [migration-status = \"crossed\" and my-home-country = \"Guatemala\"]
@@ -1299,9 +1419,9 @@ count people with [migration-status = \"migrating\" and my-home-country = \"El S
 
 MONITOR
 341
-488
-428
-533
+490
+391
+535
 num crossed
 count people with [migration-status = \"crossed\" and my-home-country = \"El Salvador\"]
 17
@@ -1353,7 +1473,7 @@ count people with [migration-status = \"at_border\" and my-home-country = \"Beli
 MONITOR
 751
 486
-838
+826
 531
 num crossed
 count people with [migration-status = \"crossed\" and my-home-country = \"Belize\"]
@@ -1389,7 +1509,7 @@ MONITOR
 1299
 327
 ratio
-count people with [migration-status = \"crossed\" and my-home-country = \"Honduras\"]/(count people with [my-home-country = \"Honduras\"])
+count people with [migration-status = \"crossed\" and my-home-country = \"Mexico\"]/(count people with [my-home-country = \"Mexico\"])
 4
 1
 11
@@ -1417,10 +1537,10 @@ count people with [migration-status = \"crossed\" and my-home-country = \"El Sal
 11
 
 MONITOR
-685
-534
-742
-579
+684
+533
+741
+578
 ratio
 count people with [migration-status = \"crossed\" and my-home-country = \"Belize\"]/(count people with [my-home-country = \"Belize\"])
 4
@@ -1449,15 +1569,142 @@ population-scale
 1
 
 MONITOR
-848
-534
-1242
-579
+868
+533
+1301
+578
 NIL
 all-country-risks
 17
 1
 11
+
+MONITOR
+1222
+204
+1285
+249
+total migrant
+item 0 total-migration-counts
+17
+1
+11
+
+MONITOR
+1241
+329
+1302
+374
+total migrants
+item 3 total-migration-counts
+17
+1
+11
+
+MONITOR
+1224
+455
+1287
+500
+total migrants
+item 1 total-migration-counts
+17
+1
+11
+
+MONITOR
+333
+538
+387
+583
+total migrants
+item 2 total-migration-counts
+17
+1
+11
+
+MONITOR
+741
+533
+798
+578
+total migrants
+item 4 total-migration-counts
+17
+1
+11
+
+MONITOR
+1309
+328
+1376
+373
+new ratio
+(item 3 total-migration-counts)/(count people with [my-home-country = \"Honduras\"])
+4
+1
+11
+
+MONITOR
+1292
+454
+1361
+499
+new ratio
+(item 1 total-migration-counts)/(count people with [my-home-country = \"Guatemala\"])
+4
+1
+11
+
+MONITOR
+797
+533
+864
+578
+new ratio
+(item 4 total-migration-counts)/(count people with [my-home-country = \"Belize\"])
+4
+1
+11
+
+MONITOR
+386
+538
+436
+583
+new ratio
+(item 2 total-migration-counts)/(count people with [my-home-country = \"El Salvador\"])
+4
+1
+11
+
+MONITOR
+1292
+202
+1356
+247
+new ratio
+(item 0 total-migration-counts)/(count people with [my-home-country = \"Mexico\"])
+4
+1
+11
+
+BUTTON
+125
+314
+225
+347
+step model
+run-model
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -1855,6 +2102,38 @@ NetLogo 6.4.0
     </enumeratedValueSet>
     <enumeratedValueSet variable="max-align-turn">
       <value value="0"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Sam" repetitions="10" sequentialRunOrder="false" runMetricsEveryStep="false">
+    <setup>model-setup
+setup-population</setup>
+    <go>run-model</go>
+    <timeLimit steps="200"/>
+    <metric>count turtles</metric>
+    <metric>num-crossed</metric>
+    <enumeratedValueSet variable="border_restriction">
+      <value value="false"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-risk-aversion">
+      <value value="24"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="pop-display">
+      <value value="&quot;Honduras&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="population-scale">
+      <value value="100000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-display">
+      <value value="&quot;pop&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-willingness-to-migrate">
+      <value value="66"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-means">
+      <value value="42"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="border-choice">
+      <value value="&quot;border-network-hometown&quot;"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
