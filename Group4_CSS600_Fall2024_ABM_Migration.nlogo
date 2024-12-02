@@ -71,10 +71,10 @@ to model-setup
     ["Belize" 0.037]
     ;; Add more countries and their risk values here
   ]
-  set num-migrating n-values length country-names [0]
-  set num-at-border n-values length country-names [0]
-  set num-crossed n-values length country-names [0]
-  set total-migration-counts n-values length country-names [0]
+  set num-migrating 0
+  set num-at-border 0
+  set num-crossed 0
+  set total-migration-counts 0
   ;; Draw the map
   draw
   reset-ticks
@@ -535,42 +535,38 @@ to assign-people-attributes
 end
 
 ;; HELPER FUNCTION
-to update-counters
-  ;; Reset lists
-  set num-migrating n-values length country-names [0]
-  set num-at-border n-values length country-names [0]
+;to update-counters
+;  ;; Reset lists
+;  set num-migrating n-values length country-names [0]
+;  set num-at-border n-values length country-names [0]
 
   ;; Update migrating counters
-  ask people with [migration-status = "migrating"] [
-    let country-index position my-home-country country-names
-    if country-index != false [
-      set num-migrating replace-item country-index num-migrating (item country-index num-migrating + 1)
-    ]
-  ]
+;  ask people with [migration-status = "migrating"] [
+;    let country-index position my-home-country country-names
+;    if country-index != false [
+;      set num-migrating replace-item country-index num-migrating (item country-index num-migrating + 1)
+;    ]
+;  ]
 
   ;; Update at border counters
-  ask people with [migration-status = "at_border"] [
-    let country-index position my-home-country country-names
-    if country-index != false [
-      set num-at-border replace-item country-index num-at-border (item country-index num-at-border + 1)
-    ]
-  ]
+;  ask people with [migration-status = "at_border"] [
+;    let country-index position my-home-country country-names
+;    if country-index != false [
+;      set num-at-border replace-item country-index num-at-border (item country-index num-at-border + 1)
+;    ]
+;  ]
 
   ;; Update at border counters
-  ask people with [migration-status = "crossed"] [
-    let country-index position my-home-country country-names
-    if country-index != false [
-      set num-crossed replace-item country-index num-crossed (item country-index num-crossed + 1)
-    ]
-  ]
+;  ask people with [migration-status = "crossed"] [
+;    let country-index position my-home-country country-names
+;    if country-index != false [
+;      set num-crossed replace-item country-index num-crossed (item country-index num-crossed + 1)
+;    ]
+;  ]
 
-  ;; Calculate totals
-  (foreach num-migrating num-at-border num-crossed [
-    [migrating at-border] ->
-    let index position migrating num-migrating
-    set total-migration-counts replace-item index total-migration-counts (migrating + at-border)
-  ])
-end
+
+
+;end
 
 
 ;; BUTTON PROCEDURE TO RUN THE MODEL
@@ -579,7 +575,7 @@ to run-model
   if not any? people with [migration-status = "migrating"]
       [stop]
   ;; Update counters before agents move
-  update-counters
+  ;update-counters
 
   ; have agents get info from other agents that are close by or those from their hometown that already crossed
    ask people with [migration-status = "migrating" ]
@@ -611,7 +607,13 @@ to run-model
   ; enable border crossings and apprehensions etc
   handle-people-at-border
 
-  ; set num-crossed count people with [migration-status = "crossed"]
+  set num-crossed count people with [migration-status = "crossed"]
+  set num-migrating count people with [migration-status = "migrating"]
+  set num-at-border count people with [migration-status = "at_border"]
+  ;; Calculate totals
+
+  set total-migration-counts total-migration-counts + num-crossed + num-migrating + num-at-border
+
   update-globals
   update-display
 
@@ -1002,7 +1004,7 @@ SWITCH
 309
 border_restriction
 border_restriction
-1
+0
 1
 -1000
 
@@ -1089,7 +1091,7 @@ CHOOSER
 pop-display
 pop-display
 "Mexico" "All" "Belize" "Honduras" "Guatemala" "El Salvador" "Non-Mexico"
-6
+1
 
 SLIDER
 3
@@ -1100,7 +1102,7 @@ avg-risk-aversion
 avg-risk-aversion
 0
 100
-24.0
+41.0
 1
 1
 NIL
@@ -2128,6 +2130,45 @@ setup-population</setup>
     </enumeratedValueSet>
     <enumeratedValueSet variable="avg-willingness-to-migrate">
       <value value="66"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-means">
+      <value value="42"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="border-choice">
+      <value value="&quot;border-network-hometown&quot;"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Lydia" repetitions="1" runMetricsEveryStep="false">
+    <setup>model-setup
+setup-population</setup>
+    <go>run-model</go>
+    <metric>num-crossed</metric>
+    <metric>num-migrating</metric>
+    <metric>num-at-border</metric>
+    <metric>total-migration-counts</metric>
+    <enumeratedValueSet variable="border_restriction">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-risk-aversion">
+      <value value="20"/>
+      <value value="40"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="pop-display">
+      <value value="&quot;Mexico&quot;"/>
+      <value value="&quot;Belize&quot;"/>
+      <value value="&quot;Honduras&quot;"/>
+      <value value="&quot;El Salvador&quot;"/>
+      <value value="&quot;Guatemala&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="population-scale">
+      <value value="100000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="change-display">
+      <value value="&quot;pop&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-willingness-to-migrate">
+      <value value="50"/>
+      <value value="60"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="avg-means">
       <value value="42"/>
