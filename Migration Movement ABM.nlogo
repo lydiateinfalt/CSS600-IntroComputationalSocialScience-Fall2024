@@ -1,10 +1,12 @@
-; Amira Al-Khulaidy and Melanie Swartz
-; Sangmin Lee, Lisa Nguyen, Lydia Teinfalt
+
+; Sangmin Lee, Lisa Nguyen, Lydia Teinfalt, Professor Dale Rothman
 ; Last updated: 12/15/2024
 ; Model of Movements for Migration
 ; Computational Social Science
 ; George Mason University
-; Created using Netlogo 6.1.1, 2020
+; Created using Netlogo 6.4, 2024
+; GitHub: https://github.com/lydiateinfalt/CSS600-IntroComputationalSocialScience-Fall2024
+; Original model from Amira Al-Khulaidy and Melanie Swartz
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
