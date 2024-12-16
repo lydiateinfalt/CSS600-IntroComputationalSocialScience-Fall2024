@@ -1,6 +1,6 @@
 ; Amira Al-Khulaidy and Melanie Swartz
 ; Sangmin Lee, Lisa Nguyen, Lydia Teinfalt
-; Last updated: 12/01/2024
+; Last updated: 12/15/2024
 ; Model of Movements for Migration
 ; Computational Social Science
 ; George Mason University
@@ -10,8 +10,7 @@
 
 ;; GLOBAL VARIABLES AND AGENT PROPERTIES
 extensions [gis csv]; gis and csv extension for Netlogo
-globals [countries mex_districts border_line border_pts bbox patch-scale scale-bar global-willingness global-means global-risk current-display num-crossed country-risk num-migrating num-at-border total-migration-counts
-  country-names]
+globals [countries mex_districts border_line border_pts bbox patch-scale scale-bar global-willingness global-means global-risk current-display num-crossed country-risk num-migrating num-at-border total-migration-counts]
 patches-own [water-here land-here border-here country district-name habitable? crossable? pop-count migrant-count
   border-sector-name border-wall-here border-crossing-point-here border-crossing-point-name border-crossing-point-name-abbr
   border-wall-here-status border-crossing-point-here-status
@@ -61,7 +60,6 @@ to model-setup
   set patch-scale gis:load-dataset "data/25sqkm_box.shp"; includes a 25sq km square and a 50km square for determinging patch size
   set scale-bar gis:load-dataset "data/scale_200km.shp"; scale bar with 0, 100, 200km labels, and 2 boxes of 50km, and 2 of 100km use 50km for black, 100 for white
   set bbox gis:load-dataset "data/bbox.shp";
-  set country-names ["Mexico" "Guatemala" "El Salvador" "Honduras" "Belize"]
   ; Using INFORM Risk Indexhttps://drmkc.jrc.ec.europa.eu/inform-index/INFORM-Risk/Risk-Facts-Figures
   set country-risk [
     ["Mexico" 0.055]
@@ -533,40 +531,6 @@ to assign-people-attributes
 
   check-my-migration-status
 end
-
-;; HELPER FUNCTION
-;to update-counters
-;  ;; Reset lists
-;  set num-migrating n-values length country-names [0]
-;  set num-at-border n-values length country-names [0]
-
-  ;; Update migrating counters
-;  ask people with [migration-status = "migrating"] [
-;    let country-index position my-home-country country-names
-;    if country-index != false [
-;      set num-migrating replace-item country-index num-migrating (item country-index num-migrating + 1)
-;    ]
-;  ]
-
-  ;; Update at border counters
-;  ask people with [migration-status = "at_border"] [
-;    let country-index position my-home-country country-names
-;    if country-index != false [
-;      set num-at-border replace-item country-index num-at-border (item country-index num-at-border + 1)
-;    ]
-;  ]
-
-  ;; Update at border counters
-;  ask people with [migration-status = "crossed"] [
-;    let country-index position my-home-country country-names
-;    if country-index != false [
-;      set num-crossed replace-item country-index num-crossed (item country-index num-crossed + 1)
-;    ]
-;  ]
-
-
-
-;end
 
 
 ;; BUTTON PROCEDURE TO RUN THE MODEL
@@ -2028,7 +1992,7 @@ setup-population</setup>
       <value value="&quot;border-network-hometown&quot;"/>
     </enumeratedValueSet>
   </experiment>
-  <experiment name="Lydia" repetitions="1" runMetricsEveryStep="false">
+  <experiment name="Lydia" repetitions="25" runMetricsEveryStep="false">
     <setup>model-setup
 setup-population</setup>
     <go>run-model</go>
@@ -2037,7 +2001,9 @@ setup-population</setup>
     <metric>num-migrating</metric>
     <metric>num-at-border</metric>
     <metric>total-migration-counts</metric>
+    <metric>count turtles</metric>
     <enumeratedValueSet variable="border_restriction">
+      <value value="false"/>
       <value value="true"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="avg-risk-aversion">
@@ -2050,6 +2016,7 @@ setup-population</setup>
       <value value="&quot;Honduras&quot;"/>
       <value value="&quot;El Salvador&quot;"/>
       <value value="&quot;Guatemala&quot;"/>
+      <value value="&quot;Non-Mexico&quot;"/>
     </enumeratedValueSet>
     <enumeratedValueSet variable="population-scale">
       <value value="100000"/>
@@ -2061,11 +2028,11 @@ setup-population</setup>
       <value value="50"/>
       <value value="60"/>
     </enumeratedValueSet>
-    <enumeratedValueSet variable="avg-means">
-      <value value="42"/>
-    </enumeratedValueSet>
     <enumeratedValueSet variable="border-choice">
       <value value="&quot;border-network-hometown&quot;"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="avg-means">
+      <value value="42"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
