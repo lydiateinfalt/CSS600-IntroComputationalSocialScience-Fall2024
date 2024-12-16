@@ -1,4 +1,4 @@
-CSS 600 Introduction to Computational Social Science (George Mason University) Fall 2024 semester with Professor Dale Rothman. Co-authors Lisa Anh Nguyen (lnguye82) and Sam Lee (sfiohgihase) on a group project using NetLogo to study migration patterns of migrants from Mexico and a few Central American countries. 
+CSS 600 Introduction to Computational Social Science (George Mason University) Fall 2024 semester with Professor Dale Rothman. Co-authors Lisa Anh Nguyen (lnguye82@gmu.edu) and Sam Lee (sfiohgihase) on a group project using NetLogo to study migration patterns of migrants from Mexico and a few Central American countries. 
 You may contact me at lteinfal@gmu.edu for more information.
 
 Abstract:  
